@@ -1,0 +1,42 @@
+//the data you want to save must be in bytes
+byte[] bytearray;
+//name of the snapshot
+private String currentSave="snapshot"+1235;
+
+private void executeSaving(){
+
+    // get the snapshoClient
+    SnapshotsClient snapshotsClient= Games.getSnapshotsClient(this,account);
+
+    // to save a game
+    snapshotsClient.open(currentSave,true).addOnCompleteListener(task -> {
+
+        Snapshot snapshot =task.getResult().getData();
+
+        if (snapshot != null){
+            //call of the method writeSnapshot params : the snapshot and the data we 
+            //want to save with a description
+            writeSnapshot(snapshot,bytearray,"first description").addOnCompleteListener(task1 -> {
+
+                if(task1.isSuccessful()){
+                    Toast.makeText(getApplicationContext(),"Succesful",Toast.LENGTH_SHORT).show();
+                }else {
+                    Log.e("ERR",""+task1.getException());
+                }
+            });
+        }
+    });
+}
+
+private Task<SnapshotMetadata> writeSnapshot(Snapshot snapshot ,byte[] bytearray,String desc){
+
+    //write your data in the snapshot
+    snapshot.getSnapshotContents().writeBytes(bytearray);
+
+    SnapshotMetadataChange snapshotMetadata = new SnapshotMetadataChange.Builder().setDescription(desc).build();
+
+    SnapshotsClient snapshotsClient=Games.getSnapshotsClient(this,account);
+
+    //commit and close to send the new changes to google play games services
+    return snapshotsClient.commitAndClose(snapshot,snapshotMetadata);
+}
